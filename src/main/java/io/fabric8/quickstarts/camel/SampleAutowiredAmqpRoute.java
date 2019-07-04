@@ -48,16 +48,12 @@ public class SampleAutowiredAmqpRoute extends RouteBuilder {
         JacksonDataFormat jsonDataFormat = new JacksonDataFormat(Order.class);
 
         from("amqp:queue:orders")
-        // .unmarshal()
-        // .string("UTF-8")
-        // .json(JsonLibrary.Jackson, Order.class)
-        // .unmarshal(jsonDataFormat)
         .log("body::::: ${body} is String")
         .log("${body} is 'java.lang.String'")
         .log("headers::::: ${headers}")
-        // .convertToString()
         .convertBodyTo(String.class)
         .unmarshal().json(JsonLibrary.Jackson, Order.class)
+        // TODO: This can go, just for testing purposes
         .choice()
             .when().simple("${body.orderitem} == 'pants'")
                 .log("found pants")
@@ -75,58 +71,7 @@ public class SampleAutowiredAmqpRoute extends RouteBuilder {
 
 
 
-// https://examples.javacodegeeks.com/enterprise-java/apache-camel/apache-camel-amqp-example/
-
-        // .marshal().json()
-        // .marshal().string("UTF-8")           // TODO: try this !!!!!!!!!!!!!!!
-        // .unmarshal().json(JsonLibrary.Jackson, Order.class)
-
-        // TODO: try marshal().json().
-
-  // from(startEndpoint).unmarshal.json(JsonLibrary.Jackson, classOf[Payload]).to("bean:myBean?method=process")
-
-        // from("amqp:queue:orders")
-        // .to("direct:foo");
-        // .to("log:sample");
-
-        // from("direct:foo")
-        // .unmarshal().serialization()
-        // .unmarshal().json(JsonLibrary.Jackson, Order.class)
-        // .choice()
-        //     .when().simple("${body.orderitem} == 'pants'")
-        //         .log("found pants")
-        //     .otherwise()
-        //         .log("found not pants")
-        // // close the choice() block :
-        // .end();
-
-
-        // JSON Data Format
-        // JacksonDataFormat jsonDataFormat = new JacksonDataFormat(Order.class);
-
-        // from("direct:foo")
-        // .unmarshal(jsonDataFormat)
-        // .choice()
-        //     .when().simple("${body.orderitem} == 'pants'")
-        //         .log("found pants")
-        //     .otherwise()
-        //         .log("found not pants")
-        // // close the choice() block :
-        // .end()
-        // .log("Finished");
-        
-        // from("file:C:/inputFolder").doTry().unmarshal(xmlDataFormat).
-        // process(new MyProcessor()).marshal(jsonDataFormat).
 
     }
 }
 
-// Good unmarshal exmaple"
-// https://www.javainuse.com/camel/camel-marshal-unmarshal-example
-
-
-// "orderitem": "jacket",  "quantity": "2",}]
-// 09:27:08.260 [Camel (MyCamel) thread #0 - JmsConsumer[orders]] INFO  sample - Exchange[ExchangePattern: InOnly, BodyType: byte[], Body: {   "orderitem": "pants",   "quantity": "10",}]
-// 09:27:08.267 [Camel (MyCamel) thread #0 - JmsConsumer[orders]] INFO  sample - Exchange[ExchangePattern: InOnly, BodyType: byte[], Body: {   "orderitem": "shoes",   "quantity": "1",}]
-
-//ref: https://stackoverflow.com/questions/40756027/apache-camel-json-marshalling-to-pojo-java-bean
