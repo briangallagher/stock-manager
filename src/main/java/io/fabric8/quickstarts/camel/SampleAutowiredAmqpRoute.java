@@ -25,6 +25,7 @@ import org.apache.camel.language.bean.BeanLanguage;
 import org.apache.camel.model.dataformat.JsonLibrary;
 import org.apache.camel.component.jackson.JacksonDataFormat;
 import io.fabric8.quickstarts.camel.Order;
+import org.apache.camel.Exchange;
 
 @Component
 public class SampleAutowiredAmqpRoute extends RouteBuilder {
@@ -48,29 +49,32 @@ public class SampleAutowiredAmqpRoute extends RouteBuilder {
         JacksonDataFormat jsonDataFormat = new JacksonDataFormat(Order.class);
 
         from("amqp:queue:orders")
-        .log("body::::: ${body} is String")
-        .log("${body} is 'java.lang.String'")
-        .log("headers::::: ${headers}")
-        .convertBodyTo(String.class)
-        .unmarshal().json(JsonLibrary.Jackson, Order.class)
-        // TODO: This can go, just for testing purposes
-        .choice()
-            .when().simple("${body.orderitem} == 'pants'")
-                .log("found pants")
-            .otherwise()
-                .log("found not pants")
-        // close the choice() block :
-        .end()
-        .log("Finished");
+	        .log("body::::: ${body} is String")
+	        .log("${body} is 'java.lang.String'")
+	        .log("headers::::: ${headers}")
+	        .convertBodyTo(String.class)
+	        .unmarshal().json(JsonLibrary.Jackson, Order.class)
+	        .to("direct:callSupplierManager")	        
+	        // TODO: This can go, just for testing purposes
+//	        .choice()
+//	            .when().simple("${body.orderitem} == 'pants'")
+//	                .log("found pants")
+//	                .to("direct:callSupplierManager")
+//	            .otherwise()
+//	                .log("found not pants")
+	        // close the choice() block :
+	        .end()
+	        .log("Finished");
 
 
-        // .setHeader(Exchange.HTTP_METHOD, constant("POST"))
-        // .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
-        // .setBody(simple("Quantity: ${body.quantity}"))
-        // .to("http://supplier-api-camel-test-brian.1ef9.nwr-dev.openshiftapps.com/orders/v1.0"); // must use ?bridgeEndpoint=true
-
-
-
+        from("direct:callSupplierManager")
+	        .routeId("call-supplier")
+	        .setHeader(Exchange.HTTP_METHOD, constant("POST"))
+	        .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+	        .removeHeaders("CamelHttp*") // remove Camel headers to non camel endpoints - they will get rejected otherwise 
+	        .setBody( simple("{ \"orderItem\": \"${body.orderitem}\", \"quantity\": \"${body.quantity}\" }"))
+	        .log("Supplier payload: ${body}")
+	        .to("http://supplier-manager-camel-test-brian.1ef9.nwr-dev.openshiftapps.com/restock/books");
 
     }
 }
